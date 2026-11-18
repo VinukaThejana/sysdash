@@ -1,0 +1,44 @@
+<section id="processes" class="panel processes" aria-labelledby="processes-title"
+         hx-get="processes?sort={% if by_memory %}memory{% else %}cpu{% endif %}"
+         hx-trigger="every 2s [!document.hidden], refresh from:body" hx-swap="morph:outerHTML">
+  <header class="panel-head">
+    <h2 id="processes-title">Processes</h2>
+    <p class="panel-note">Top {{ rows.len() }} by {% if by_memory %}memory{% else %}CPU{% endif %} · bars relative to the top one</p>
+  </header>
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Name</th>
+        <th scope="col" class="col-user">User</th>
+        <th scope="col" class="col-pid num">PID</th>
+        <th scope="col" class="num" data-key="cpu" aria-sort="{% if by_memory %}none{% else %}descending{% endif %}">
+          <button class="sort" hx-get="processes?sort=cpu" hx-target="#processes" hx-swap="morph:outerHTML"><i class="key"></i>CPU<svg><use href="#i-down"/></svg></button>
+        </th>
+        <th scope="col" class="num" data-key="mem" aria-sort="{% if by_memory %}descending{% else %}none{% endif %}">
+          <button class="sort" hx-get="processes?sort=memory" hx-target="#processes" hx-swap="morph:outerHTML"><i class="key"></i>Memory<svg><use href="#i-down"/></svg></button>
+        </th>
+        <th scope="col" class="col-act"><span class="visually-hidden">Actions</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in rows %}
+      <tr id="proc-{{ p.pid }}">
+        <td class="col-name">
+          <span class="name">{{ p.name }}</span>
+          <span class="cmd" title="{{ p.command }}">{{ p.command }}</span>
+        </td>
+        <td class="col-user">{{ p.user }}</td>
+        <td class="col-pid num">{{ p.pid }}</td>
+        <td class="num{% if !by_memory %} lead{% endif %}" data-key="cpu" data-level="{{ p.cpu.level }}">{{ p.cpu_text }}<i class="cell-bar" style="--p: {{ p.cpu_bar }}"></i></td>
+        <td class="num{% if by_memory %} lead{% endif %}" data-key="mem" data-level="{{ p.memory_meter.level }}">{{ p.memory }}<i class="cell-bar" style="--p: {{ p.memory_bar }}"></i></td>
+        <td class="col-act">
+          {% if p.own %}
+          <button class="icon-btn danger" aria-label="Stop {{ p.name }}" title="Stop" hx-post="processes/{{ p.pid }}/kill" hx-swap="none"
+                  hx-confirm="Stop {{ p.name }} ({{ p.pid }})? It gets a SIGTERM and can save its work first."><svg><use href="#i-stop"/></svg></button>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>

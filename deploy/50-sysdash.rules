@@ -1,0 +1,17 @@
+// Lets the dashboard's user start, stop, restart, enable and disable system services
+// without a password prompt (the dashboard has no way to show one).
+//
+// This applies to every process running as that user, not just sysdash.
+// Install, filling in your user name:
+//   sed "s/@USER@/$USER/" deploy/50-sysdash.rules | sudo install -Dm644 /dev/stdin /etc/polkit-1/rules.d/50-sysdash.rules
+// polkit picks it up immediately; no restart needed.
+polkit.addRule(function (action, subject) {
+    var actions = [
+        "org.freedesktop.systemd1.manage-units",
+        "org.freedesktop.systemd1.manage-unit-files",
+        "org.freedesktop.systemd1.reload-daemon",
+    ];
+    if (subject.user == "@USER@" && actions.indexOf(action.id) >= 0) {
+        return polkit.Result.YES;
+    }
+});

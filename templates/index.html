@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="{{ host }}">
+  <title>{{ host }}</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23fff'/%3E%3Crect x='10' y='30' width='10' height='24' fill='%238ec5ee'/%3E%3Crect x='22' y='18' width='10' height='36' fill='%239fd89a'/%3E%3Crect x='34' y='26' width='10' height='28' fill='%23c6bfe2'/%3E%3Crect x='46' y='12' width='10' height='42' fill='%23ffc48f'/%3E%3C/svg%3E">
+  <link rel="preload" href="assets/archivo.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/app.css">
+  <script src="assets/htmx.min.js" defer></script>
+  <script src="assets/idiomorph-ext.min.js" defer></script>
+  <script src="assets/app.js" defer></script>
+</head>
+<body hx-ext="morph">
+  <svg class="sprite" aria-hidden="true">
+    <!-- One family: 24px grid, 2px strokes, square caps, mitred joins. -->
+    <symbol id="i-gauge" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M4.5 17.5a8.5 8.5 0 1 1 15 0"/><path d="m12 13.5 3.5-4.5"/></g></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M9 6.5h11M9 12h11M9 17.5h11M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01"/></g></symbol>
+    <symbol id="i-stack" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><path d="m12 3.5 8.5 4.25L12 12 3.5 7.75z"/><path d="m3.5 12 8.5 4.25L20.5 12"/><path d="m3.5 16.25 8.5 4.25 8.5-4.25"/></g></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" d="m7 7 10 10M17 7 7 17"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><rect x="4" y="4" width="16" height="16"/><rect x="9" y="9" width="6" height="6" fill="currentColor"/></g></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></g></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" d="m7 10 5 5 5-5"/></symbol>
+    <symbol id="i-arrow-down" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" d="M12 5v14m-5.5-5.5L12 19l5.5-5.5"/></symbol>
+    <symbol id="i-disk" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><path d="M3 13h18v7H3z"/><path d="M5 13 7 4h10l2 9"/><path d="M16 16.5h1"/></g></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path fill="currentColor" d="M2.5 5h7l2 2.5h10v12h-19z"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><path d="M5 3h9l5 5v13H5z"/><path d="M14 3v5h5"/></g></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><path d="M4 6.5h16"/><path d="M9 6.5V3.5h6v3"/><path d="M6 6.5 7 21h10l1-14.5"/><path d="M10 10.5v6.5M14 10.5v6.5"/></g></symbol>
+    <symbol id="i-agent" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><path d="M4 6h16v12H4z"/><path d="m8 10 2.5 2L8 14"/><path d="M13 14h3"/></g></symbol>
+    <symbol id="i-arrow-up" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" d="M12 19V5m-5.5 5.5L12 5l5.5 5.5"/></symbol>
+  </svg>
+
+  <div class="app" data-view="overview">
+    {{ band|safe }}
+    <main class="main">
+      <div data-pane="overview">{{ overview|safe }}</div>
+      <div class="workspace" data-work="processes">
+      <div class="work-tabs" role="tablist" aria-label="Processes or storage">
+        <button role="tab" data-work-tab="processes" aria-selected="true">Processes</button>
+        <button role="tab" data-work-tab="storage" aria-selected="false">Storage</button>
+        <button role="tab" data-work-tab="agents" aria-selected="false">Agents</button>
+      </div>
+      <div data-pane="processes">{{ processes|safe }}</div>
+      <div data-pane="agents">
+        <section id="agents" class="panel agents" aria-labelledby="agents-title" hx-get="agents"
+                 hx-trigger="intersect once" hx-swap="morph:outerHTML">
+          <header class="panel-head"><h2 id="agents-title">Agents</h2></header>
+          <ul class="skeleton" aria-hidden="true"><li></li><li></li><li></li></ul>
+        </section>
+      </div>
+      <div data-pane="storage">
+        <section id="storage" class="panel storage" aria-labelledby="storage-title" hx-get="storage?path=/"
+                 hx-trigger="intersect once" hx-swap="morph:outerHTML">
+          <header class="panel-head"><h2 id="storage-title">Storage</h2></header>
+          <ul class="skeleton" aria-hidden="true"><li></li><li></li><li></li></ul>
+        </section>
+      </div>
+      </div>
+    </main>
+
+    <aside class="side" data-pane="services">
+      <section class="panel services" aria-labelledby="services-title">
+        <header class="panel-head">
+          <h2 id="services-title">Services</h2>
+        </header>
+        <form id="service-filters" class="filters" hx-get="services" hx-target="#services-list"
+              hx-swap="morph:outerHTML" hx-trigger="input changed delay:200ms from:input[name=q], change"
+              onsubmit="return false">
+          <div class="filter-row">
+            <label class="search">
+              <svg aria-hidden="true"><use href="#i-search"/></svg>
+              <input type="search" name="q" placeholder="Filter by name" autocomplete="off" spellcheck="false" aria-label="Filter services by name">
+            </label>
+            <div class="segmented" role="radiogroup" aria-label="Scope">
+              <label><input type="radio" name="scope" value="all" checked><span>All</span></label>
+              <label><input type="radio" name="scope" value="system"><span>System</span></label>
+              <label><input type="radio" name="scope" value="user"><span>User</span></label>
+            </div>
+          </div>
+          <div class="tabs" role="radiogroup" aria-label="State">
+            <label><input type="radio" name="state" value="running" checked><span>Running</span></label>
+            <label><input type="radio" name="state" value="failed"><span>Failing</span></label>
+            <label><input type="radio" name="state" value="stopped"><span>Stopped</span></label>
+            <label><input type="radio" name="state" value="all"><span>All</span></label>
+          </div>
+        </form>
+        <div id="services-list" class="services-list" aria-busy="true" hx-get="services" hx-include="#service-filters"
+             hx-trigger="load" hx-swap="morph:outerHTML">
+          <ul class="skeleton" aria-hidden="true"><li></li><li></li><li></li><li></li><li></li><li></li></ul>
+        </div>
+      </section>
+    </aside>
+
+    <nav class="tabbar" role="tablist" aria-label="Sections">
+      <button role="tab" data-tab="overview" aria-selected="true"><svg><use href="#i-gauge"/></svg><span>Overview</span></button>
+      <button role="tab" data-tab="processes" aria-selected="false"><svg><use href="#i-list"/></svg><span>Processes</span></button>
+      <button role="tab" data-tab="services" aria-selected="false"><svg><use href="#i-stack"/></svg><span>Services</span></button>
+      <button role="tab" data-tab="storage" aria-selected="false"><svg><use href="#i-disk"/></svg><span>Storage</span></button>
+      <button role="tab" data-tab="agents" aria-selected="false"><svg><use href="#i-agent"/></svg><span>Agents</span></button>
+    </nav>
+  </div>
+
+  <dialog id="sheet" class="sheet" aria-label="Service details">
+    <div id="sheet-body"></div>
+  </dialog>
+
+  <dialog id="confirm" class="confirm">
+    <form method="dialog">
+      <p id="confirm-text"></p>
+      <div class="confirm-actions">
+        <button value="cancel" class="btn btn-quiet">Cancel</button>
+        <button value="ok" class="btn confirm-ok">Continue</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

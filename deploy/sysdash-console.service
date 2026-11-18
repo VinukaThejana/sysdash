@@ -1,0 +1,31 @@
+# System unit: shows `sysdash tui` on tty1 (the machine's own screen) instead of a login
+# prompt. It runs as the dashboard's user with no login session and no shell, so there is
+# nothing to escape into; quitting just restarts it. Other consoles and SSH are unchanged.
+# Installed by deploy/console.sh, which fills in the user, uid and home folder and also
+# masks getty@tty1 and autovt@tty1.
+
+[Unit]
+Description=sysdash terminal view on tty1
+After=systemd-user-sessions.service user@@UID@.service
+Conflicts=getty@tty1.service
+
+[Service]
+User=@USER@
+ExecStart=@HOME@/.local/bin/sysdash tui
+# The user bus, so user services show up in the failing list (needs lingering:
+# `loginctl enable-linger @USER@`).
+Environment=TERM=linux
+Environment=XDG_RUNTIME_DIR=/run/user/@UID@
+Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/@UID@/bus
+StandardInput=tty
+StandardOutput=tty
+StandardError=journal
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

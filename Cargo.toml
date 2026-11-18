@@ -1,0 +1,18 @@
+[package]
+name = "sysdash"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+askama = "0.16.1"
+axum = { version = "0.8.9", features = ["macros"] }
+futures-util = { version = "0.3.34", default-features = false, features = ["std"] }
+ratatui = { version = "0.30.2", default-features = false, features = ["crossterm", "layout-cache"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+sysinfo = "0.40.3"
+thiserror = "2.0.21"
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1.44"
+tracing-subscriber = "0.3.23"
+zbus = { version = "6.3.0", default-features = false, features = ["tokio"] }

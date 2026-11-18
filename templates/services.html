@@ -1,0 +1,24 @@
+<div id="services-list" class="services-list" hx-get="services" hx-include="#service-filters"
+     hx-trigger="every 5s [!document.hidden], refresh from:body delay:600ms" hx-swap="morph:outerHTML">
+  <p class="summary">{{ summary }}</p>
+  {% for e in errors %}<p class="error">{{ e }}</p>{% endfor %}
+  <ul>
+    {% for s in rows %}
+    <li>
+      <button class="svc" data-state="{{ s.state }}" hx-get="{{ s.url }}" hx-target="#sheet-body" hx-swap="innerHTML">
+        <i class="sq" data-state="{{ s.state }}"></i>
+        <span class="svc-main">
+          <span class="svc-name">{{ s.name }}{% if s.user %}<span class="tag">user</span>{% endif %}</span>
+          <span class="svc-desc">{% if s.description.is_empty() %}{{ s.state_label }}{% else %}{{ s.description }}{% endif %}</span>
+        </span>
+        <span class="svc-meta">
+          {% if s.state == "failed" %}<span class="svc-state">{{ s.state_label }}</span>{% else %}<span>{{ s.memory }}</span>{% endif %}
+          {% if !s.boot.is_empty() %}<span class="svc-boot">{{ s.boot }}</span>{% endif %}
+        </span>
+      </button>
+    </li>
+    {% else %}
+    <li class="empty">No services match these filters.</li>
+    {% endfor %}
+  </ul>
+</div>

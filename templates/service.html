@@ -1,0 +1,52 @@
+<div class="sheet-content" id="sheet-content" hx-get="{{ url }}" hx-target="#sheet-body"
+     hx-trigger="refresh from:body delay:700ms">
+  <header class="sheet-head" data-state="{{ state }}">
+    <div class="sheet-title">
+      <h2 tabindex="-1" autofocus>{{ name }}</h2>
+      <p class="sheet-state"><i class="sq" data-state="{{ state }}"></i>{{ state_label }}</p>
+      {% if !description.is_empty() %}<p class="sheet-desc">{{ description }}</p>{% endif %}
+    </div>
+    <button class="icon-btn" data-close aria-label="Close"><svg><use href="#i-close"/></svg></button>
+  </header>
+
+  <div class="actions" hx-swap="none">
+    {% if masked %}
+    <button class="btn btn-primary" hx-post="{{ url }}/unmask">Unmask</button>
+    {% else if running %}
+    <button class="btn" hx-post="{{ url }}/restart" hx-confirm="Restart {{ name }}?{{ warning }}">Restart</button>
+    {% else %}
+    <button class="btn btn-primary" hx-post="{{ url }}/start">Start</button>
+    {% endif %}
+    {% if !masked %}
+    {% if can_enable %}<button class="btn" hx-post="{{ url }}/enable">Start at boot</button>{% endif %}
+    {% if can_disable %}<button class="btn" hx-post="{{ url }}/disable" hx-confirm="Stop {{ name }} starting at boot?{{ warning }}">Don't start at boot</button>{% endif %}
+    {% endif %}
+    <div class="danger-group">
+      {% if running %}
+      <button class="btn btn-danger" hx-post="{{ url }}/stop" hx-confirm="Stop {{ name }}?{{ warning }}">Stop</button>
+      <button class="btn btn-danger" hx-post="{{ url }}/kill" hx-confirm="Kill {{ name }}? Every process of the service gets SIGKILL and can't clean up. If the unit restarts on failure, systemd may start it again.{{ warning }}">Kill</button>
+      {% endif %}
+      {% if let Some(confirm) = delete_confirm %}
+      <button class="btn btn-danger" hx-post="{{ url }}/delete" hx-confirm="{{ confirm }}">Delete</button>
+      {% endif %}
+    </div>
+  </div>
+
+  <dl class="facts">
+    <div class="fact-wide"><dt>Unit file</dt><dd class="path">{% if let Some(path) = unit_file %}{{ path }}{% else %}Not on disk (generated or transient){% endif %}</dd></div>
+    {% for (label, value) in facts %}
+    <div><dt>{{ label }}</dt><dd>{{ value }}</dd></div>
+    {% endfor %}
+  </dl>
+
+  <section class="logs-block" aria-labelledby="logs-title">
+    <header class="logs-head">
+      <h3 id="logs-title">Logs</h3>
+      <div class="logs-tools">
+        <button class="text-btn" type="button" data-copy-logs>Copy</button>
+        <button class="text-btn" hx-get="{{ url }}" hx-target="#sheet-body">Reload</button>
+      </div>
+    </header>
+    <pre class="logs" data-scroll-end>{{ logs }}</pre>
+  </section>
+</div>

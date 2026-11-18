@@ -1,0 +1,23 @@
+<header id="band" class="band" data-state="{% if failing.is_empty() %}ok{% else %}attention{% endif %}"
+        hx-get="band" hx-trigger="every 5s [!document.hidden], refresh from:body delay:900ms"
+        hx-swap="morph:outerHTML">
+  <div class="band-row">
+    <div class="band-id">
+      <h1>{{ host }}</h1>
+      <p>{{ os }} · Linux {{ kernel }}</p>
+    </div>
+    <p class="band-uptime"><span>Up</span> {{ uptime }}</p>
+  </div>
+  <div class="band-status" role="status">
+    {% if failing.is_empty() %}
+    <p><i class="sq" data-state="ok"></i>No failed or crash-looping services.</p>
+    {% else %}
+    <p><i class="sq" data-state="failed"></i>{{ failing.len() }} {% if failing.len() == 1 %}service needs{% else %}services need{% endif %} attention</p>
+    <ul class="band-units">
+      {% for unit in failing %}
+      <li><button class="unit-chip" hx-get="{{ unit.url }}" hx-target="#sheet-body" hx-swap="innerHTML">{{ unit.name }} <span>{% if unit.restarting %}crash-looping{% else %}failed{% endif %}</span></button></li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+</header>

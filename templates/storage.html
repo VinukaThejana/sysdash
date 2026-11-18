@@ -1,0 +1,50 @@
+<section id="storage" class="panel storage" aria-labelledby="storage-title" hx-get="{{ url }}"
+         hx-trigger="{% if scanning.is_some() %}every 1s, {% endif %}refresh from:body delay:300ms" hx-swap="morph:outerHTML">
+  <header class="panel-head">
+    <h2 id="storage-title">Storage</h2>
+    <div class="storage-tools">
+      {% if let Some(s) = scanned %}<p class="panel-note">{{ s }}</p>{% endif %}
+      {% if scanning.is_none() %}<button class="text-btn" hx-post="storage/rescan" hx-swap="none">Rescan</button>{% endif %}
+    </div>
+  </header>
+
+  {% if let Some(progress) = scanning %}
+  <div class="storage-scan" role="status">
+    <p class="storage-scan-title">Measuring the whole disk</p>
+    <p class="panel-note">{{ progress }}. The first scan takes a minute; browsing is instant after it.</p>
+    <span class="scan-bar"><i></i></span>
+  </div>
+  {% else if let Some(message) = missing %}
+  <div class="storage-empty">
+    <p>{{ message }}</p>
+    <button class="text-btn" hx-get="storage?path=/" hx-target="#storage" hx-swap="morph:outerHTML">Back to /</button>
+  </div>
+  {% else %}
+  <nav class="crumbs" aria-label="Folder">
+    {% for c in crumbs %}{% if loop.last %}<span class="crumb current" aria-current="page">{{ c.label }}</span>{% else %}<button class="crumb" hx-get="{{ c.url }}" hx-target="#storage" hx-swap="morph:outerHTML">{{ c.label }}</button>{% if !loop.first %}<span class="crumb-sep">/</span>{% endif %}{% endif %}{% endfor %}
+  </nav>
+  <p class="storage-sum"><b>{{ total }}</b> {{ summary }}</p>
+  <ul class="store-list" data-key="disk">
+    {% for r in rows %}
+    <li class="store-row">
+      {% if let Some(href) = r.url %}<button class="store-main" hx-get="{{ href }}" hx-target="#storage" hx-swap="morph:outerHTML">{% else %}<div class="store-main">{% endif %}
+        <svg class="store-icon" aria-hidden="true"><use href="#{% if r.is_dir %}i-folder{% else %}i-file{% endif %}"/></svg>
+        <span class="store-text">
+          <span class="store-name">{{ r.name }}</span>
+          <span class="store-detail">{{ r.detail }}</span>
+        </span>
+        <span class="store-size">{{ r.size }}</span>
+        <span class="share" aria-hidden="true"><i style="--p: {{ r.share }}"></i></span>
+      {% if r.url.is_some() %}</button>{% else %}</div>{% endif %}
+      {% if let Some((vals, confirm)) = r.delete %}
+      <button class="icon-btn danger" aria-label="Delete {{ r.name }}" title="Delete" hx-post="storage/delete" hx-vals="{{ vals }}"
+              hx-confirm="{{ confirm }}" hx-swap="none"><svg><use href="#i-trash"/></svg></button>
+      {% else %}<span class="icon-btn-space"></span>{% endif %}
+    </li>
+    {% else %}
+    <li class="storage-empty">This folder is empty.</li>
+    {% endfor %}
+  </ul>
+  {% if let Some(m) = more %}<p class="store-more">{{ m }}</p>{% endif %}
+  {% endif %}
+</section>

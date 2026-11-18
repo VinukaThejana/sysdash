@@ -1,0 +1,26 @@
+<section id="agents" class="panel agents" aria-labelledby="agents-title" hx-get="agents"
+         hx-trigger="every 3s [!document.hidden], refresh from:body" hx-swap="morph:outerHTML">
+  <header class="panel-head">
+    <h2 id="agents-title">Agents</h2>
+    <p class="panel-note">{{ summary }}</p>
+  </header>
+  {% if let Some(e) = herdr_error %}<p class="agents-note">{{ e }}. Showing agents found by process only.</p>{% endif %}
+  <ul class="agent-list">
+    {% for a in rows %}
+    <li class="agent" data-status="{{ a.status }}">
+      <span class="agent-state"><i class="sq"></i>{{ a.label }}</span>
+      <span class="agent-main">
+        <span class="agent-title">{{ a.title }}</span>
+        <span class="agent-where">{{ a.kind }} · {{ a.place }}</span>
+      </span>
+      <span class="agent-stats">
+        <span class="agent-cpu">{{ a.cpu }}</span>
+        <span class="agent-mem">{{ a.memory }}</span>
+      </span>
+      <span class="agent-age">{{ a.age }}</span>
+    </li>
+    {% else %}
+    <li class="empty">No agents running.</li>
+    {% endfor %}
+  </ul>
+</section>

@@ -1,0 +1,75 @@
+<section id="overview" class="overview" hx-get="overview"
+         hx-trigger="every 2s [!document.hidden], visibilitychange[!document.hidden] from:document"
+         hx-swap="morph:outerHTML">
+
+  <ul class="vitals" aria-label="Vitals">
+    <li class="vital" data-key="cpu" data-level="{{ cpu.level }}" title="{{ cpu_brand }}">
+      <p class="vital-label"><i class="key"></i>CPU</p>
+      <p class="vital-figure">{{ cpu.percent }}<small>%</small></p>
+      <p class="vital-note">{{ core_summary }}{% if let Some(t) = temperature %} · {{ t }}{% endif %}</p>
+      <span class="meter"><i style="--p: {{ cpu.percent }}"></i></span>
+    </li>
+    <li class="vital" data-key="mem" data-level="{{ memory.level }}">
+      <p class="vital-label"><i class="key"></i>Memory</p>
+      <p class="vital-figure">{{ memory.percent }}<small>%</small></p>
+      <p class="vital-note">{{ memory_text }}</p>
+      <span class="meter"><i style="--p: {{ memory.percent }}"></i></span>
+    </li>
+    {% for disk in disks %}
+    <li class="vital is-link" data-key="disk" data-level="{{ disk.meter.level }}" data-storage-path="{{ disk.mount }}"
+        role="button" tabindex="0" title="Browse {{ disk.mount }} ({{ disk.fs }})">
+      <p class="vital-label"><i class="key"></i>Disk <span class="path">{{ disk.mount }}</span></p>
+      <p class="vital-figure">{{ disk.meter.percent }}<small>%</small></p>
+      <p class="vital-note">{{ disk.text }}</p>
+      <span class="meter"><i style="--p: {{ disk.meter.percent }}"></i></span>
+    </li>
+    {% endfor %}
+    <li class="vital" data-key="net">
+      <p class="vital-label"><i class="key"></i>Network</p>
+      <p class="vital-figure net"><svg aria-label="Down"><use href="#i-arrow-down"/></svg>{{ net_rx }}</p>
+      <p class="vital-note net"><svg aria-label="Up"><use href="#i-arrow-up"/></svg>{{ net_tx }} · {% for n in networks %}{{ n.name }}{% if !loop.last %}, {% endif %}{% endfor %}</p>
+    </li>
+    {% if let Some((meter, text)) = swap %}
+    <li class="vital" data-key="mem" data-level="{{ meter.level }}">
+      <p class="vital-label"><i class="key"></i>Swap</p>
+      <p class="vital-figure">{{ meter.percent }}<small>%</small></p>
+      <p class="vital-note">{{ text }}</p>
+      <span class="meter"><i style="--p: {{ meter.percent }}"></i></span>
+    </li>
+    {% endif %}
+    <li class="vital" data-key="cpu">
+      <p class="vital-label"><i class="key"></i>Load</p>
+      <p class="vital-figure">{{ load_1 }}</p>
+      <p class="vital-note">{{ load_5_15 }}</p>
+    </li>
+  </ul>
+
+  <section class="panel history" aria-labelledby="history-title">
+    <header class="panel-head">
+      <h2 id="history-title">History</h2>
+      <p class="panel-note">Last 2 minutes · 0 to 100%</p>
+    </header>
+    <div class="strips">
+      <figure class="strip" data-key="cpu">
+        <figcaption><i class="key"></i>CPU <b>{{ cpu.label }}</b></figcaption>
+        <svg viewBox="0 0 120 40" preserveAspectRatio="none" role="img" aria-label="CPU use, last two minutes">
+          <line class="mid" x1="0" x2="120" y1="20" y2="20"/>
+          <path class="cols" d="{{ cpu_chart.columns }}"/>
+        </svg>
+      </figure>
+      <figure class="strip" data-key="mem">
+        <figcaption><i class="key"></i>Memory <b>{{ memory.label }}</b></figcaption>
+        <svg viewBox="0 0 120 40" preserveAspectRatio="none" role="img" aria-label="Memory use, last two minutes">
+          <line class="mid" x1="0" x2="120" y1="20" y2="20"/>
+          <path class="cols" d="{{ memory_chart.columns }}"/>
+        </svg>
+      </figure>
+      <figure class="threads" data-key="cpu">
+        <figcaption>Per {% if cores.len() > 1 %}thread{% else %}core{% endif %}</figcaption>
+        <div class="thread-bars" style="--n: {{ cores.len() }}">
+          {% for core in cores %}<span class="thread" data-level="{{ core.level }}" title="Thread {{ loop.index0 }}: {{ core.label }}"><i style="--p: {{ core.percent }}"></i></span>{% endfor %}
+        </div>
+      </figure>
+    </div>
+  </section>
+</section>

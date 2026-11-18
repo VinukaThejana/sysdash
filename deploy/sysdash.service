@@ -1,0 +1,21 @@
+# systemd user unit. Install:
+#   cargo build --release
+#   install -Dm755 target/release/sysdash ~/.local/bin/sysdash
+#   install -Dm644 deploy/sysdash.service ~/.config/systemd/user/sysdash.service
+#   systemctl --user enable --now sysdash
+# Runs as a user unit so it can manage this user's services on the session bus. System
+# services go through polkit (deploy/50-sysdash.rules).
+
+[Unit]
+Description=System dashboard
+
+[Service]
+# Settings such as BIND (default 127.0.0.1:8091); see README "Configuration".
+EnvironmentFile=-%h/.config/sysdash/env
+ExecStart=%h/.local/bin/sysdash
+# Binding to a VPN address fails until the VPN is up after boot, so keep retrying.
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
