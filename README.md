@@ -59,7 +59,7 @@ network cyan, failure red, warnings yellow), so both views follow your theme, li
 pastels instead.
 
 `deploy/console.sh` (run with sudo) shows the view on tty1 in place of the login prompt, as a
-service with no login session or shell, and switches the console font to Terminus.
+service with a login session but no shell, and switches the console font to Terminus.
 `--undo` puts the login prompt back.
 
 ## Requirements

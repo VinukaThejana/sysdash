@@ -1,6 +1,6 @@
 # System unit: shows `sysdash tui` on tty1 (the machine's own screen) instead of a login
-# prompt. It runs as the dashboard's user with no login session and no shell, so there is
-# nothing to escape into; quitting just restarts it. Other consoles and SSH are unchanged.
+# prompt. It runs as the dashboard's user with no shell, so there is nothing to escape into;
+# quitting just restarts it. Other consoles and SSH are unchanged.
 # Installed by deploy/console.sh, which fills in the user, uid and home folder and also
 # masks getty@tty1 and autovt@tty1.
 
@@ -11,6 +11,10 @@ Conflicts=getty@tty1.service
 
 [Service]
 User=@USER@
+# Opens a logind session on seat0, as the login prompt did. Without one, logind grants
+# nobody the seat's devices: PipeWire can't open the sound cards, so a media player on this
+# screen (e.g. Kodi) sees no speakers or HDMI audio.
+PAMName=login
 ExecStart=@HOME@/.local/bin/sysdash tui
 # The user bus, so user services show up in the failing list (needs lingering:
 # `loginctl enable-linger @USER@`).
