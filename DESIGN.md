@@ -26,6 +26,8 @@ colors:
   disk-wash: "#f7f5fc"
   net: "#ffc48f"
   net-wash: "#fff7ef"
+  bat: "#8fd8d2"
+  bat-wash: "#f0faf9"
   fail: "#c62f26"
   fail-wash: "#fdeceb"
   fail-ink: "#9f1f17"
@@ -134,6 +136,9 @@ components:
     textColor: "{colors.ink}"
   vital-tile-net:
     backgroundColor: "{colors.net-wash}"
+    textColor: "{colors.ink}"
+  vital-tile-bat:
+    backgroundColor: "{colors.bat-wash}"
     textColor: "{colors.ink}"
   vital-meter:
     backgroundColor: "{colors.track}"
@@ -259,7 +264,7 @@ This world rejects strong saturated fields and large blue areas, the category's 
 
 ## Colors
 
-White paper and charcoal ink, four soft subsystem pastels each with a near-white wash, and one strong red kept for failure.
+White paper and charcoal ink, four soft subsystem pastels (and a fifth for the battery) each with a near-white wash, and one strong red kept for failure.
 
 ### Primary
 - **Charcoal Ink** (ink): text, figures, section rules, the selected segment, the default toast, and the primary and confirm buttons (white text via on-ink; hover lifts to ink-hover). The system's action colour is ink, not a hue.
@@ -269,12 +274,13 @@ White paper and charcoal ink, four soft subsystem pastels each with a near-white
 - **Memory Mint** (mem, mem-wash): memory and swap tiles, memory history, the memory table column.
 - **Disk Lavender** (disk, disk-wash): one tile per mounted disk.
 - **Network Peach** (net, net-wash): the network tile's key and wash; its up/down arrows stay ink-3.
+- **Battery Aqua** (bat, bat-wash): the battery tile, shown only on a machine with one. Not in the stripe, which stays the four subsystems. Its meter has no 70%/90% notches, and its flags mean low charge on battery: "Low" below 20%, "Critical" below 10%.
 - Each pastel is a fill only: key squares (with a key-hairline inset so they hold on white), meters, history columns, cell bars, and the stripe. Each wash is the background of that subsystem's vital tile and the colour of its meter notches.
 
 ### Tertiary
 - **Failure Red** (fail): the one strong colour. Failed state squares, failed service names and state words, over-90% figures, meters and thread bars, the danger button's text and outline, the 5px edge of a failed sheet head and a destructive confirm, the outline of an error toast, and the solid fill of a destructive confirm button (white text).
 - **Failure Wash and Ink** (fail-wash, fail-ink): soft red fields with deep red text: failing-unit chips, the Critical flag, the failed sheet head, the error toast and the danger button's hover.
-- **Warning Wash and Ink** (warn-wash, warn-ink): the soft yellow "High" flag above 70%, a colour no subsystem owns.
+- **Warning Wash and Ink** (warn-wash, warn-ink): the soft yellow "High" flag above 70% (the battery's "Low" flag below 20%), a colour no subsystem owns.
 
 ### Neutral
 - **Paper** (ground, surface): white everywhere; the header, sheet, dialogs and tab bar sit on it.

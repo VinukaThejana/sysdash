@@ -40,6 +40,8 @@ pub struct Snapshot {
     pub processes: Vec<Process>,
     /// Every running AI coding agent process, with the load of everything it spawned.
     pub agents: Vec<AgentProcess>,
+    /// The machine's own battery; `None` on a machine without one.
+    pub battery: Option<Battery>,
     pub uptime_secs: u64,
 }
 
@@ -84,6 +86,90 @@ pub struct Network {
 pub struct Temperature {
     pub label: String,
     pub celsius: f32,
+}
+
+/// The machine's battery, read from its power supply's `uevent` in sysfs.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Battery {
+    /// Charge, 0–100.
+    pub percent: f32,
+    pub state: Charge,
+    /// Time until empty while discharging, or until full while charging, at the current rate.
+    pub remaining_secs: Option<u64>,
+    /// Power flowing in or out, in watts.
+    pub watts: Option<f32>,
+    /// What a full charge holds now, as a share of what it held new, 0–100.
+    pub health: Option<f32>,
+    pub cycles: Option<u32>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Charge {
+    Charging,
+    Discharging,
+    Full,
+    /// Plugged in but held where it is, e.g. by a charge limit.
+    NotCharging,
+}
+
+/// Where the kernel lists power supplies: batteries, chargers, and peripherals' batteries.
+const POWER_SUPPLIES: &str = "/sys/class/power_supply";
+/// Longer estimates come from a near-zero rate and mean nothing.
+const MAX_REMAINING_SECS: f64 = 48.0 * 3600.0;
+
+impl Battery {
+    /// The first system battery under [`POWER_SUPPLIES`].
+    fn read() -> Option<Self> {
+        std::fs::read_dir(POWER_SUPPLIES)
+            .ok()?
+            .flatten()
+            .find_map(|e| Self::from_uevent(&std::fs::read_to_string(e.path().join("uevent")).ok()?))
+    }
+
+    /// Parses a power supply's `uevent`. `None` unless it's a battery that powers the machine,
+    /// not a wireless mouse's (scope `Device`). Batteries report either energy (µWh, µW) or
+    /// charge (µAh, µA); the arithmetic is the same in either unit.
+    fn from_uevent(uevent: &str) -> Option<Self> {
+        let field = |key: &str| {
+            uevent.lines().find_map(|l| l.strip_prefix("POWER_SUPPLY_")?.strip_prefix(key)?.strip_prefix('='))
+        };
+        let num = |key: &str| field(key)?.trim().parse::<f64>().ok();
+        if field("TYPE")? != "Battery" || field("SCOPE") == Some("Device") || field("PRESENT") == Some("0") {
+            return None;
+        }
+        let unit = if num("ENERGY_NOW").is_some() { "ENERGY" } else { "CHARGE" };
+        let now = num(&format!("{unit}_NOW"));
+        let full = num(&format!("{unit}_FULL")).filter(|f| *f > 0.0);
+        let design = num(&format!("{unit}_FULL_DESIGN")).filter(|d| *d > 0.0);
+        let percent = num("CAPACITY").or_else(|| Some(now? / full? * 100.0))?;
+        let state = match field("STATUS") {
+            Some("Charging") => Charge::Charging,
+            Some("Discharging") => Charge::Discharging,
+            Some("Full") => Charge::Full,
+            _ => Charge::NotCharging,
+        };
+        // Some batteries report the rate negative while discharging.
+        let rate = if unit == "ENERGY" { num("POWER_NOW") } else { num("CURRENT_NOW") }.map(f64::abs).filter(|r| *r > 0.0);
+        let watts = match unit {
+            "ENERGY" => rate.map(|uw| uw / 1e6),
+            _ => rate.zip(num("VOLTAGE_NOW")).map(|(ua, uv)| ua * uv / 1e12),
+        };
+        let left = match state {
+            Charge::Discharging => now,
+            Charge::Charging => full.zip(now).map(|(f, n)| (f - n).max(0.0)),
+            Charge::Full | Charge::NotCharging => None,
+        };
+        let remaining_secs =
+            left.zip(rate).map(|(l, r)| l / r * 3600.0).filter(|s| *s <= MAX_REMAINING_SECS).map(|s| s as u64);
+        Some(Self {
+            percent: percent.clamp(0.0, 100.0) as f32,
+            state,
+            remaining_secs,
+            watts: watts.map(|w| w as f32),
+            health: full.zip(design).map(|(f, d)| (f / d * 100.0) as f32),
+            cycles: num("CYCLE_COUNT").filter(|c| *c > 0.0).map(|c| c as u32),
+        })
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -208,6 +294,7 @@ impl Sampler {
             temperatures: self.temperatures(),
             processes: self.processes(),
             agents: self.agents(),
+            battery: Battery::read(),
             uptime_secs: System::uptime().unwrap_or_default(),
         }
     }
@@ -405,4 +492,63 @@ fn push_bounded(history: &mut VecDeque<f32>, value: f32) {
 pub fn own_uid() -> u32 {
     use std::os::unix::fs::MetadataExt;
     std::fs::metadata("/proc/self").map(|m| m.uid()).unwrap_or(u32::MAX)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const LAPTOP: &str = "POWER_SUPPLY_NAME=BAT0
+POWER_SUPPLY_TYPE=Battery
+POWER_SUPPLY_STATUS=Discharging
+POWER_SUPPLY_CHARGE_TYPES=Long Life
+POWER_SUPPLY_PRESENT=1
+POWER_SUPPLY_CYCLE_COUNT=383
+POWER_SUPPLY_VOLTAGE_NOW=11357000
+POWER_SUPPLY_POWER_NOW=5212000
+POWER_SUPPLY_ENERGY_FULL_DESIGN=52650000
+POWER_SUPPLY_ENERGY_FULL=42850000
+POWER_SUPPLY_ENERGY_NOW=18670000
+POWER_SUPPLY_CAPACITY=44
+";
+
+    #[test]
+    fn reads_an_energy_battery() {
+        let b = Battery::from_uevent(LAPTOP).unwrap();
+        assert_eq!((b.percent, b.state, b.cycles), (44.0, Charge::Discharging, Some(383)));
+        // 18.67 Wh at 5.212 W.
+        assert_eq!(b.remaining_secs, Some(12_895));
+        assert_eq!(b.watts.map(|w| (w * 10.0).round()), Some(52.0));
+        assert_eq!(b.health.map(f32::round), Some(81.0));
+    }
+
+    #[test]
+    fn reads_a_charge_battery_charging() {
+        let uevent = "POWER_SUPPLY_TYPE=Battery
+POWER_SUPPLY_STATUS=Charging
+POWER_SUPPLY_CHARGE_FULL=4000000
+POWER_SUPPLY_CHARGE_NOW=3000000
+POWER_SUPPLY_CURRENT_NOW=-2000000
+POWER_SUPPLY_VOLTAGE_NOW=12000000
+";
+        let b = Battery::from_uevent(uevent).unwrap();
+        // No CAPACITY: worked out from the charge. 1 Ah to go at 2 A.
+        assert_eq!((b.percent, b.state, b.remaining_secs), (75.0, Charge::Charging, Some(1800)));
+        assert_eq!(b.watts, Some(24.0));
+        assert_eq!(b.health, None);
+    }
+
+    #[test]
+    fn skips_chargers_and_peripheral_batteries() {
+        assert_eq!(Battery::from_uevent("POWER_SUPPLY_TYPE=Mains\nPOWER_SUPPLY_ONLINE=1\n"), None);
+        let mouse = "POWER_SUPPLY_TYPE=Battery\nPOWER_SUPPLY_SCOPE=Device\nPOWER_SUPPLY_CAPACITY=80\n";
+        assert_eq!(Battery::from_uevent(mouse), None);
+    }
+
+    #[test]
+    fn has_no_estimate_when_plugged_in_and_holding() {
+        let held = LAPTOP.replace("Discharging", "Not charging");
+        let b = Battery::from_uevent(&held).unwrap();
+        assert_eq!((b.state, b.remaining_secs), (Charge::NotCharging, None));
+    }
 }

@@ -15,6 +15,14 @@
       <p class="vital-note">{{ memory_text }}</p>
       <span class="meter"><i style="--p: {{ memory.percent }}"></i></span>
     </li>
+    {% if let Some(battery) = battery %}
+    <li class="vital" data-key="bat" data-level="{{ battery.meter.level }}" title="{{ battery.detail }}">
+      <p class="vital-label"><i class="key"></i>Battery</p>
+      <p class="vital-figure">{{ battery.meter.percent }}<small>%</small></p>
+      <p class="vital-note">{{ battery.note }}</p>
+      <span class="meter"><i style="--p: {{ battery.meter.percent }}"></i></span>
+    </li>
+    {% endif %}
     {% for disk in disks %}
     <li class="vital is-link" data-key="disk" data-level="{{ disk.meter.level }}" data-storage-path="{{ disk.mount }}"
         role="button" tabindex="0" title="Browse {{ disk.mount }} ({{ disk.fs }})">

@@ -43,6 +43,8 @@
   --disk-wash: #f7f5fc;
   --net: #ffc48f;
   --net-wash: #fff7ef;
+  --bat: #8fd8d2;
+  --bat-wash: #f0faf9;
 
   /* Failure: the only strong colour. Text in --fail, soft fields in --fail-wash with --fail-ink. */
   --fail: #c62f26;
@@ -128,6 +130,7 @@ svg { width: 16px; height: 16px; flex: none; display: block; }
 [data-key="mem"] { --k: var(--mem); --w: var(--mem-wash); }
 [data-key="disk"] { --k: var(--disk); --w: var(--disk-wash); }
 [data-key="net"] { --k: var(--net); --w: var(--net-wash); }
+[data-key="bat"] { --k: var(--bat); --w: var(--bat-wash); }
 
 /* State squares stay neutral (no subsystem colour); only failure is red. */
 .sq { display: inline-block; width: 8px; height: 8px; flex: none; background: var(--rule-strong); }
@@ -317,6 +320,8 @@ svg { width: 16px; height: 16px; flex: none; display: block; }
   color: var(--warn-ink);
 }
 .vital[data-level="crit"] .vital-label::after { content: "Critical"; background: var(--fail-wash); color: var(--fail-ink); }
+/* The battery worries when it's low, not high. */
+.vital[data-key="bat"][data-level="warn"] .vital-label::after { content: "Low"; }
 
 /* A flat field of the subsystem's colour along the tile's foot, notched at 70% and 90%. */
 .meter {
@@ -342,6 +347,8 @@ svg { width: 16px; height: 16px; flex: none; display: block; }
   transition: width 600ms var(--ease-out), background-color 300ms;
 }
 .vital[data-level="crit"] .meter i { background: var(--fail); }
+/* The 70% and 90% notches mark load; a charge has no such lines. */
+.vital[data-key="bat"] .meter::after { content: none; }
 
 /* ── History: flat colour columns on one shared 0–100 scale ───── */
 

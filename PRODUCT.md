@@ -24,7 +24,7 @@ A central place to see how the machine is doing and manage its services, without
 
 ## Capabilities and Constraints
 
-- Live CPU (overall, per thread, load, temperature), memory and swap with two-minute history, disks, network rates.
+- Live CPU (overall, per thread, load, temperature), memory and swap with two-minute history, disks, network rates, and the battery (charge, time left or to full, power draw, health) when there is one.
 - Top processes by CPU or memory; the owner's own processes can be sent SIGTERM.
 - Every system and user systemd service: state, memory, CPU time, restart count, unit file, last 200 journal lines; start, stop, restart, enable, disable. Failed and crash-looping services are surfaced first.
 - Stopping units that keep the machine reachable (sshd, NetworkManager, wg-quick, dbus, systemd-*) warns before acting.

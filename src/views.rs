@@ -10,7 +10,7 @@ use askama::Template;
 use serde::Deserialize;
 
 use crate::{
-    metrics::{Process, Snapshot, Usage},
+    metrics::{Battery, Charge, Process, Snapshot, Usage},
     storage::{Listing, Storage},
     agents::AgentList,
     systemd::{DeleteMode, Details, Failing, Scope, Service},
@@ -76,6 +76,7 @@ pub struct Overview {
     pub memory_text: String,
     pub memory_chart: Chart,
     pub swap: Option<(Meter, String)>,
+    pub battery: Option<BatteryTile>,
     pub disks: Vec<DiskRow>,
     pub networks: Vec<NetworkRow>,
     /// All interfaces together, per second.
@@ -130,6 +131,44 @@ impl Chart {
     }
 }
 
+/// The battery's charge, what it's doing, and the rate and wear for its tooltip.
+pub struct BatteryTile {
+    /// `warn` below 20% and `crit` below 10%, but only while running on it.
+    pub meter: Meter,
+    /// `On battery · 3h 35m left`, `Charging · 40m to full`.
+    pub note: String,
+    /// `5.2 W · health 81% · 383 cycles`.
+    pub detail: String,
+}
+
+impl BatteryTile {
+    fn new(b: &Battery) -> Self {
+        let mut meter = Meter::new(b.percent);
+        meter.level = match (b.state, meter.percent) {
+            (Charge::Discharging, 0..10) => "crit",
+            (Charge::Discharging, 10..20) => "warn",
+            _ => "ok",
+        };
+        let time = |suffix: &str| b.remaining_secs.map(|s| format!(" · {} {suffix}", duration(s))).unwrap_or_default();
+        let note = match b.state {
+            Charge::Discharging => format!("On battery{}", time("left")),
+            Charge::Charging => format!("Charging{}", time("to full")),
+            Charge::Full => "Full · plugged in".to_owned(),
+            Charge::NotCharging => "Plugged in · not charging".to_owned(),
+        };
+        let detail = [
+            b.watts.map(|w| format!("{w:.1} W")),
+            b.health.map(|h| format!("health {h:.0}%")),
+            b.cycles.map(|c| format!("{c} cycles")),
+        ]
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>()
+        .join(" · ");
+        Self { meter, note, detail }
+    }
+}
+
 pub struct DiskRow {
     pub mount: String,
     pub fs: String,
@@ -166,6 +205,7 @@ impl Overview {
             memory_text: usage(s.memory),
             memory_chart: Chart::new(&s.memory_history),
             swap: (s.swap.total > 0).then(|| (Meter::new(s.swap.percent()), usage(s.swap))),
+            battery: s.battery.as_ref().map(BatteryTile::new),
             disks: s
                 .disks
                 .iter()

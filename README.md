@@ -4,7 +4,8 @@ A self-hosted system dashboard for one Linux machine, styled like kodi-remote. O
 a phone or laptop to see how the machine is doing and to manage its services.
 
 - **Overview**: CPU (overall, per thread, load, temperature) and memory with 2-minute
-  charts, swap, disks and network rates. Refreshes every 2 seconds.
+  charts, swap, disks, network rates and the battery (charge, time left, power draw,
+  health). Refreshes every 2 seconds.
 - **Needs attention**: services that failed or are crash-looping (still starting after 3+
   automatic restarts) are listed at the top.
 - **Processes**: the top 15 by CPU or memory. Your own processes get a stop button
